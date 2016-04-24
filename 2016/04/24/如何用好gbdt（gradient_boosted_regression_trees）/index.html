@@ -1,0 +1,286 @@
+<!DOCTYPE html><html lang="en-us"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>Zhi Wang's Machine Learning  blog</title><meta name="description"><meta name="generator" content="Zhi Wang's Machine Learning  blog"><meta name="author" content="Zhi Wang"><meta name="keywords" content="sjaak van den berg, svdb, bitcoin, crypto, payment, integration, bitcoins, wordpress, betaling, webshop, front end, design, ontwerp, developer"><meta name="HandheldFriendly" content="True"><meta name="MobileOptimized" content="320"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1,user-scalable=0"><link rel="stylesheet" type="text/css" href="/styles/screen.css"><link rel="apple-touch-icon" sizes="57x57" href="/images/apple-touch-icon-57x57.png"><link rel="apple-touch-icon" sizes="60x60" href="/images/apple-touch-icon-60x60.png"><link rel="apple-touch-icon" sizes="72x72" href="/images/apple-touch-icon-72x72.png"><link rel="apple-touch-icon" sizes="76x76" href="/images/apple-touch-icon-76x76.png"><link rel="apple-touch-icon" sizes="114x114" href="/images/apple-touch-icon-114x114.png"><link rel="apple-touch-icon" sizes="120x120" href="/images/apple-touch-icon-120x120.png"><link rel="apple-touch-icon" sizes="144x144" href="/images/apple-touch-icon-144x144.png"><link rel="apple-touch-icon" sizes="152x152" href="/images/apple-touch-icon-152x152.png"><link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-180x180.png"><link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png"><link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png"><link rel="icon" type="image/png" sizes="96x96" href="/images/favicon-96x96.png"><link rel="icon" type="image/png" sizes="160x160" href="/images/favicon-160x160.png"><link rel="icon" type="image/png" sizes="192x192" href="/images/favicon-192x192.png"><meta name="msapplication-TileColor" content="#121315"><meta name="msapplication-TileImage" content="/images/mstile-144x144.png"></head><body itemscope itemtype="https://schema.org/WebPage"><header itemscope itemtype="https://schema.org/WPHeader"><a href="/"><img src="/images/svdb.png" alt="Zhi Wang's Machine Learning  blog" title="Zhi Wang's Machine Learning  blog"></a><h1><a href="/" alt="Zhi Wang's Machine Learning  blog" title="Zhi Wang's Machine Learning  blog" itemprop="headline">Zhi Wang's Machine Learning  blog</a></h1><p itemprop="description">ideas worth practise</p><nav itemscope itemtype="https://schema.org/SiteNavigationElement"><ul><li itemprop="name"><a href="/" alt="Home" title="Home" itemprop="url">Home</a></li><li itemprop="name"><a href="/articles" alt="Articles" title="Articles" itemprop="url">Articles</a></li><li itemprop="name"><a href="/about" alt="About" title="About" itemprop="url">About</a></li></ul></nav><div class="space"></div></header><main itemscope itemtype="https://schema.org/Blog"><article class="full"><h1 itemprop="headline"></h1><span class="post-meta">Published on<time itemprop="datePublished" datetime="2016-04-24T08:58:51.000Z"> 星期日, 四月 24日 2016 at 16:58</time><br>Last updated on<time itemprop="dateModified" datetime="2016-04-24T08:58:51.000Z"> 星期日, 四月 24日 2016 at 16:58</time></span><p>title: 如何使用GBM/GBDT/GBRT</p>
+<p>#如何用好GBM/GBDT/GBRT（Gradient Boosting Machine）</p>
+<p>Gradient Boosted Regression Trees (GBRT,名称就不用翻译了吧，后面直接用简称)或Gradient Boosting， 是一种用于分类和回归灵活的非指数统计学习方法。</p>
+<h2 id="Scikit-learn及Gradient-Boosting简介"><a href="#Scikit-learn及Gradient-Boosting简介" class="headerlink" title="Scikit-learn及Gradient Boosting简介"></a>Scikit-learn及Gradient Boosting简介</h2><p>Scikit-learn提供了包含有监督学习和无监督学习一系列机器学习技术，也包含了常见的模型选择，特征提取，特征选择的常见机器学习工作任务。<br>Scikit-learn以Estimator的概念为中心，提供了一种面向对象的交互。根据<a href="http://scikit-learn.org/stable/tutorial/statistical_inference/settings.html#estimators-objects" target="_blank" rel="external">scikit-learn tutorial</a>介绍：“Estimator是从数据中学习到的任意的对象，可能是分类算法、回归算法或者聚类算法，亦或是一个提取、过滤有用特征的转换算法。”Estimator的API如下：</p>
+<pre><code>class Estimator(object):
+
+    def fit(self, X, y=None):
+        &quot;&quot;&quot;Fits estimator to data. &quot;&quot;&quot;
+        # set state of ``self``
+        return self
+
+    def predict(self, X):
+        &quot;&quot;&quot;Predict response of ``X``. &quot;&quot;&quot;
+        # compute predictions ``pred``
+        return pred
+</code></pre><p>Estimator.fit方法声明estimator基于训练数据建立。通常，数据是二维的numpy数组（n_samples, n_predictors）构造方式，包含了特征矩阵及一维的numpy数组y响应变量（类别标识或者回归数值）。</p>
+<p>Estimator通过Estimator.predict方法提供生成预测结果。如果是回归的案例，Estimator.predict返回预测的回归数值；若是分类案例，则返回预测的类别标识。当然，分类器也可以预测类别的概率，可以通过Estimator.predict_proba方法返回结果。</p>
+<p>Scikit-learn中的gradient boosting提供了两个estimator：GradientBoostingClassifier和GradientBoostingRegressor，都可以从sklearn.ensemble里调用。</p>
+<pre><code>from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
+</code></pre><p>Estimators提供了一系列参数来控制拟合，GBRT里重要的参数如下：</p>
+<ul>
+<li>回归树的数量（n_estimators）</li>
+<li>每棵独立树的深度(max_depth)</li>
+<li>损失函数(loss)</li>
+<li>学习速率(learning_rate)</li>
+</ul>
+<p>例如，如果你想得到一个模型，使用100棵树，每棵树深度为3，使用最小二乘法函数作为损失函数，代码如下：</p>
+<pre><code>est = GradientBoostingRegressor(n_estimators=100, max_depth=3, loss=&apos;ls&apos;)
+</code></pre><p>我们用Scikit-learn自带的数据集来举例如何拟合GradientBoostingClassifier模型：</p>
+<pre><code>from sklearn.datasets import make_hastie_10_2
+from sklearn.cross_validation import train_test_split
+# generate synthetic data from ESLII - Example 10.2
+X, y = make_hastie_10_2(n_samples=5000)
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+# fit estimator
+est = GradientBoostingClassifier(n_estimators=200, max_depth=3)
+est.fit(X_train, y_train)
+
+# predict class labels
+pred = est.predict(X_test)
+
+# score on test data (accuracy)
+acc = est.score(X_test, y_test)
+print(&apos;ACC: %.4f&apos; % acc)
+
+# predict class probabilities
+est.predict_proba(X_test)[0]
+ACC: 0.9240
+Out[4]:
+array([ 0.26442503,  0.73557497])
+</code></pre><h2 id="Gradient-Boosting实战"><a href="#Gradient-Boosting实战" class="headerlink" title="Gradient Boosting实战"></a>Gradient Boosting实战</h2><p>大多数的GBRT的应用效果可以用一条简单的拟合曲线来展示，如下图中用一个只有一个特征x和相应变量y的回归问题来举例。我们随机从数据集中均匀抽取100个训练数据，用ground truth (sinoid函数; 淡蓝色线) 拟合，加入一些随机噪音。100个训练数据之外（蓝色），再用100个测试数据（红色）来评估模型的效果。</p>
+<pre><code>import numpy as np
+
+def ground_truth(x):
+    &quot;&quot;&quot;Ground truth -- function to approximate&quot;&quot;&quot;
+    return x * np.sin(x) + np.sin(2 * x)
+
+def gen_data(n_samples=200):
+    &quot;&quot;&quot;generate training and testing data&quot;&quot;&quot;
+    np.random.seed(13)
+    x = np.random.uniform(0, 10, size=n_samples)
+    x.sort()
+    y = ground_truth(x) + 0.75 * np.random.normal(size=n_samples)
+    train_mask = np.random.randint(0, 2, size=n_samples).astype(np.bool)
+    x_train, y_train = x[train_mask, np.newaxis], y[train_mask]
+    x_test, y_test = x[~train_mask, np.newaxis], y[~train_mask]
+    return x_train, x_test, y_train, y_test
+
+X_train, X_test, y_train, y_test = gen_data(200)
+
+# plot ground truth
+x_plot = np.linspace(0, 10, 500)
+
+def plot_data(figsize=(8, 5)):
+    fig = plt.figure(figsize=figsize)
+    gt = plt.plot(x_plot, ground_truth(x_plot), alpha=0.4, label=&apos;ground truth&apos;)
+
+    # plot training and testing data
+    plt.scatter(X_train, y_train, s=10, alpha=0.4)
+    plt.scatter(X_test, y_test, s=10, alpha=0.4, color=&apos;red&apos;)
+    plt.xlim((0, 10))
+    plt.ylabel(&apos;y&apos;)
+    plt.xlabel(&apos;x&apos;)
+
+plot_data(figsize=(8, 5))
+</code></pre><p><img src="http://7xtbox.com2.z0.glb.clouddn.com/%E4%B8%8B%E8%BD%BD.png" alt="fig.1"></p>
+<p>如果对以上数据仅使用一棵独立的回归树，就只能得到区域内稳定的近似。树的深度越深，数据分割的越细致，那么能够解决的差异就越多。如下所示：</p>
+<pre><code>from sklearn.tree import DecisionTreeRegressor
+plot_data()
+est = DecisionTreeRegressor(max_depth=1).fit(X_train, y_train)
+plt.plot(x_plot, est.predict(x_plot[:, np.newaxis]),
+     label=&apos;RT max_depth=1&apos;, color=&apos;g&apos;, alpha=0.9, linewidth=2)
+
+est = DecisionTreeRegressor(max_depth=3).fit(X_train, y_train)
+plt.plot(x_plot, est.predict(x_plot[:, np.newaxis]),
+     label=&apos;RT max_depth=3&apos;, color=&apos;g&apos;, alpha=0.7, linewidth=1)
+
+plt.legend(loc=&apos;upper left&apos;)
+Out[6]:
+&lt;matplotlib.legend.Legend at 0x5706590&gt;
+</code></pre><p><img src="http://7xtbox.com2.z0.glb.clouddn.com/fig2.png" alt="fig.2"></p>
+<p>接下来，我们可以使用gradient boosting模型来你和训练数据，然后看看随着添加更多的树，预测值与实际值的近似度是如何提升的。Scikit-learn的gradient boosting Estimator可以通过staged_(predict|predict_proba) 方法，评估模型预测效果，该方法返回一个生成器可以随着添加越来越多的树，迭代评估预测结果。</p>
+<pre><code>from itertools import islice
+
+plot_data()
+
+est = GradientBoostingRegressor(n_estimators=1000,     max_depth=1, learning_rate=1.0)
+est.fit(X_train, y_train)
+
+ax = plt.gca()
+first = True
+
+# step over prediction as we added 20 more trees.
+for pred in islice(est.staged_predict(x_plot[:,     np.newaxis]), 0, 1000, 10):
+    plt.plot(x_plot, pred, color=&apos;r&apos;, alpha=0.2)
+    if first:
+        ax.annotate(&apos;High bias - low variance&apos;,                         xy=(x_plot[x_plot.shape[0] // 2],                                                pred[x_plot.shape[0] // 2]),                                                     xycoords=&apos;data&apos;,                                    xytext=(3, 4), textcoords=&apos;data&apos;,
+                    arrowprops=dict(arrowstyle=&quot;-&gt;&quot;,
+                             connectionstyle=&quot;arc&quot;))
+        first = False
+
+pred = est.predict(x_plot[:, np.newaxis])
+plt.plot(x_plot, pred, color=&apos;r&apos;, label=&apos;GBRT max_depth=1&apos;)
+ax.annotate(&apos;Low bias - high variance&apos;,                     xy=(x_plot[x_plot.shape[0] // 2],
+            pred[x_plot.shape[0] // 2]),
+            xycoords=&apos;data&apos;, xytext=(6.25, -6),
+            textcoords=&apos;data&apos;,                                 arrowprops=dict(arrowstyle=&quot;-&gt;&quot;,
+                  connectionstyle=&quot;arc&quot;))
+plt.legend(loc=&apos;upper left&apos;)
+Out[7]:
+&lt;matplotlib.legend.Legend at 0x5d72f10&gt;
+</code></pre><p><img src="http://7xtbox.com2.z0.glb.clouddn.com/fig3.png" alt="fig.3"></p>
+<p>上图中50条红线，每条代表GBRT模型增加20棵树后的效果。可以看到，刚开始预测近似度非常粗，但随着添加更多的树，模型可以覆盖到更多的偏差，最终产生紧密的红线。</p>
+<p>可以看到，向GBRT添加的更多的树以及更深的深度，可以捕获更多的偏差，因此我们模型也更复杂。但和以往一样，机器学习模型的复杂度是以“过拟合”为代价的。</p>
+<p>GBRT实战中重要的诊断方法是使用异常坐标图来展示训练集/测试集的错误（或异常），以树的数量为横坐标。</p>
+<pre><code>n_estimators = len(est.estimators_)
+
+def deviance_plot(est, X_test, y_test, ax=None, label=&apos;&apos;, train_color=&apos;#2c7bb6&apos;,
+              test_color=&apos;#d7191c&apos;, alpha=1.0):
+              &quot;&quot;&quot;Deviance plot for ``est``, use ``X_test`` and ``y_test`` for test error. &quot;&quot;&quot;
+test_dev = np.empty(n_estimators)
+
+for i, pred in enumerate(est.staged_predict(X_test)):
+   test_dev[i] = est.loss_(y_test, pred)
+
+if ax is None:
+    fig = plt.figure(figsize=(8, 5))
+    ax = plt.gca()
+
+ax.plot(np.arange(n_estimators) + 1, test_dev, color=test_color, label=&apos;Test %s&apos; % label,
+         linewidth=2, alpha=alpha)
+ax.plot(np.arange(n_estimators) + 1, est.train_score_, color=train_color,
+         label=&apos;Train %s&apos; % label, linewidth=2, alpha=alpha)
+ax.set_ylabel(&apos;Error&apos;)
+ax.set_xlabel(&apos;n_estimators&apos;)
+ax.set_ylim((0, 2))
+return test_dev, ax
+
+test_dev, ax = deviance_plot(est, X_test, y_test)
+ax.legend(loc=&apos;upper right&apos;)
+
+# add some annotations
+ax.annotate(&apos;Lowest test error&apos;, xy=(test_dev.argmin() + 1, test_dev.min() + 0.02), xycoords=&apos;data&apos;,
+        xytext=(150, 1.0), textcoords=&apos;data&apos;,
+        arrowprops=dict(arrowstyle=&quot;-&gt;&quot;, connectionstyle=&quot;arc&quot;),
+        )
+
+ann = ax.annotate(&apos;&apos;, xy=(800, test_dev[799]),  xycoords=&apos;data&apos;,
+              xytext=(800, est.train_score_[799]), textcoords=&apos;data&apos;,
+              arrowprops=dict(arrowstyle=&quot;&lt;-&gt;&quot;))
+ax.text(810, 0.25, &apos;train-test gap&apos;)
+Out[8]:
+&lt;matplotlib.text.Text at 0x5f10a90&gt;
+</code></pre><p><img src="http://7xtbox.com2.z0.glb.clouddn.com/fig4.png" alt="fig.4"></p>
+<p>上图中蓝线是指训练集的预测偏差：可以看到开始阶段快速下降，之后随着添加更多的树而逐步降低。测试集预测偏差（红线）同样在开始阶段快速下降，但是之后速度降低很快达到了最小值（50棵树左右），之后甚至开始上升。这就是我们所指的“过拟合”：在一定阶段，模型能够非常好的拟合训练数据的特点（这个例子里是我们随机生成的噪音）但是对于新的未知数据其能力受到限制。图中在训练数据与测试数据的预测偏差中存在的巨大的差异，就是“过拟合”的一个信号。</p>
+<p>Gradient boosting很棒的一点，是提供了一系列“把手”来控制过拟合，又被成为“regularization”。</p>
+<h2 id="Regularization"><a href="#Regularization" class="headerlink" title="Regularization"></a>Regularization</h2><p>GBRT提供三个“把手”来控制“过拟合”：树结构（tree structure），收敛（shrinkage）， 随机性（randomization）。</p>
+<p>###树结构（tree structure）</p>
+<p>单棵树的深度是模型复杂度的一方面。树的深度基本上控制了特征相互作用的成都。例如，如果想覆盖维度特征和精度特征之间的交叉关系特征，需要深度至少为2的树来覆盖。不幸的是，特征相互作用的程度是预先未知的，但通常设置的比较低较好–实战中，深度4-6常得到最佳结果。在scikit-learn中，可以通过max_depth参数来限制树的深度。</p>
+<p>另一个控制树的深度的方法是在叶节点的样例数量上使用较低的边界：这样可以避免不均衡的划分，出现一个叶节点仅有一个数据点构成。在scikit-learn中可以使用min_samples_leaf参数来实现。这是一个有效的方法来减少偏差，如下例所示：</p>
+<pre><code>def fmt_params(params):
+    return &quot;, &quot;.join(&quot;{0}={1}&quot;.format(key, val) for key, val in params.iteritems())
+
+fig = plt.figure(figsize=(8, 5))
+ax = plt.gca()
+for params, (test_color, train_color) in [({}, (&apos;#d7191c&apos;, &apos;#2c7bb6&apos;)),
+                                      ({&apos;min_samples_leaf&apos;: 3},
+                                       (&apos;#fdae61&apos;, &apos;#abd9e9&apos;))]:
+    est = GradientBoostingRegressor(n_estimators=n_estimators, max_depth=1, learning_rate=1.0)
+    est.set_params(**params)
+    est.fit(X_train, y_train)
+
+    test_dev, ax = deviance_plot(est, X_test, y_test, ax=ax, label=fmt_params(params),
+                             train_color=train_color, test_color=test_color)
+
+ax.annotate(&apos;Higher bias&apos;, xy=(900, est.train_score_[899]), xycoords=&apos;data&apos;,
+        xytext=(600, 0.3), textcoords=&apos;data&apos;,
+        arrowprops=dict(arrowstyle=&quot;-&gt;&quot;, connectionstyle=&quot;arc&quot;),
+        )
+ax.annotate(&apos;Lower variance&apos;, xy=(900, test_dev[899]), xycoords=&apos;data&apos;,
+        xytext=(600, 0.4), textcoords=&apos;data&apos;,
+        arrowprops=dict(arrowstyle=&quot;-&gt;&quot;, connectionstyle=&quot;arc&quot;),
+        )
+plt.legend(loc=&apos;upper right&apos;)
+Out[9]:
+&lt;matplotlib.legend.Legend at 0x5893a90&gt;
+</code></pre><p><img src="http://7xtbox.com2.z0.glb.clouddn.com/fig5.png" alt="fig.5"></p>
+<p>###收敛（Shrinkage）<br>GBRT调参的技术最重要的就是收敛：基本想法是进行通过收敛每棵树预测值进行缓慢学习，通过learning_rage来控制。较低的学习速率需要更高数量的n_estimators，以达到相同程度的训练集误差–用时间换准确度的。</p>
+<pre><code>fig = plt.figure(figsize=(8, 5))
+ax = plt.gca()
+for params, (test_color, train_color) in [({},     (&apos;#d7191c&apos;, &apos;#2c7bb6&apos;)),
+                                                  ({&apos;learning_rate&apos;: 0.1},
+                                       (&apos;#fdae61&apos;, &apos;#abd9e9&apos;))]:
+    est = GradientBoostingRegressor(n_estimators=n_estimators, max_depth=1, learning_rate=1.0)
+    est.set_params(**params)
+    est.fit(X_train, y_train)
+
+    test_dev, ax = deviance_plot(est, X_test, y_test, ax=ax, label=fmt_params(params),
+                             train_color=train_color, test_color=test_color)
+
+ax.annotate(&apos;Requires more trees&apos;, xy=(200,     est.train_score_[199]), xycoords=&apos;data&apos;,
+        xytext=(300, 1.0), textcoords=&apos;data&apos;,
+        arrowprops=dict(arrowstyle=&quot;-&gt;&quot;, connectionstyle=&quot;arc&quot;),
+        )
+ax.annotate(&apos;Lower test error&apos;, xy=(900, test_dev[899]), xycoords=&apos;data&apos;,
+        xytext=(600, 0.5), textcoords=&apos;data&apos;,
+        arrowprops=dict(arrowstyle=&quot;-&gt;&quot;, connectionstyle=&quot;arc&quot;),
+        )
+plt.legend(loc=&apos;upper right&apos;)
+Out[10]:
+&lt;matplotlib.legend.Legend at 0x587b210&gt;
+</code></pre><p><img src="http://7xtbox.com2.z0.glb.clouddn.com/fig6.png" alt="fig.6"></p>
+<p>###随机梯度推进（Stochastic Gradient Boosting）<br>与随机森林相似，在构建树的过程中引入随机性导致更高的准确率。Scikit-learn提供了两种方法引入随机性：a)在构建树之前对训练集进行随机取样（subsample）；b)在找到最佳划分节点前对所有特征取样(max_features)。经验表明，如果有充足的特征（大于30个）后者效果更佳。值得强调的是两种选择都会降低运算时间。</p>
+<p>下文以subsample=0.5来展示效果，即使用50%的训练集来训练每棵树：</p>
+<pre><code>fig = plt.figure(figsize=(8, 5))
+ax = plt.gca()
+for params, (test_color, train_color) in [({}, (&apos;#d7191c&apos;, &apos;#2c7bb6&apos;)),
+                                      ({&apos;learning_rate&apos;: 0.1, &apos;subsample&apos;: 0.5},
+                                       (&apos;#fdae61&apos;, &apos;#abd9e9&apos;))]:
+    est = GradientBoostingRegressor(n_estimators=n_estimators, max_depth=1, learning_rate=1.0,
+                                random_state=1)
+    est.set_params(**params)
+    est.fit(X_train, y_train)
+    test_dev, ax = deviance_plot(est, X_test, y_test, ax=ax, label=fmt_params(params),
+                             train_color=train_color, test_color=test_color)
+
+ax.annotate(&apos;Even lower test error&apos;, xy=(400, test_dev[399]), xycoords=&apos;data&apos;,
+        xytext=(500, 0.5), textcoords=&apos;data&apos;,
+        arrowprops=dict(arrowstyle=&quot;-&gt;&quot;, connectionstyle=&quot;arc&quot;),
+        )
+
+est = GradientBoostingRegressor(n_estimators=n_estimators, max_depth=1, learning_rate=1.0,
+                            subsample=0.5)
+est.fit(X_train, y_train)
+test_dev, ax = deviance_plot(est, X_test, y_test, ax=ax, label=fmt_params({&apos;subsample&apos;: 0.5}),
+                         train_color=&apos;#abd9e9&apos;,     test_color=&apos;#fdae61&apos;, alpha=0.5)
+ax.annotate(&apos;Subsample alone does poorly&apos;, xy=(300, test_dev[299]), xycoords=&apos;data&apos;,
+        xytext=(250, 1.0), textcoords=&apos;data&apos;,
+        arrowprops=dict(arrowstyle=&quot;-&gt;&quot;, connectionstyle=&quot;arc&quot;),
+        )
+plt.legend(loc=&apos;upper right&apos;, fontsize=&apos;small&apos;)
+Out[11]:
+&lt;matplotlib.legend.Legend at 0x5889f10&gt;
+</code></pre><p><img src="http://7xtbox.com2.z0.glb.clouddn.com/fig7.png" alt="fig.7"></p>
+<p>###超参数调优（Hyperparameter tuning）<br>我们已经介绍了一系列参数，在机器学习中参数优化工作非常单调，尤其是参数之间相互影响，比如learning_rate和n_estimators， learning_rate和subsample， max_depth和max_features）。</p>
+<p>对于gradient boosting模型我们通常使用以下“秘方”来优化参数：</p>
+<p>1.根据要解决的问题选择损失函数<br>2.n_estimators尽可能大（如3000）<br>3.通过grid search方法对max_depth, learning_rate, min_samples_leaf, 及max_features进行寻优<br>4.增加n_estimators，保持其它参数不变，再次对learning_rate调优</p>
+<p>Scikit-learn提供了方便的API进行参数调优及grid search:</p>
+<pre><code>from sklearn.grid_search import GridSearchCV
+
+param_grid = {&apos;learning_rate&apos;: [0.1, 0.05, 0.02, 0.01],
+          &apos;max_depth&apos;: [4, 6],
+          &apos;min_samples_leaf&apos;: [3, 5, 9, 17],
+          # &apos;max_features&apos;: [1.0, 0.3, 0.1] ## not         possible in our example (only 1 fx)
+          }
+
+est = GradientBoostingRegressor(n_estimators=3000)
+# this may take some minutes
+gs_cv = GridSearchCV(est, param_grid, n_jobs=4).fit(X_train, y_train)
+
+# best hyperparameter setting
+gs_cv.best_params_
+Out[12]:
+{&apos;learning_rate&apos;: 0.05, &apos;max_depth&apos;: 6,     &apos;min_samples_leaf&apos;: 5}
+</code></pre></article></main></body></html>
