@@ -1,0 +1,59 @@
+<!DOCTYPE html><html lang="en-us"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>Zhi Wang's Machine Learning  blog</title><meta name="description"><meta name="generator" content="Zhi Wang's Machine Learning  blog"><meta name="author" content="Zhi Wang"><meta name="keywords" content="sjaak van den berg, svdb, bitcoin, crypto, payment, integration, bitcoins, wordpress, betaling, webshop, front end, design, ontwerp, developer"><meta name="HandheldFriendly" content="True"><meta name="MobileOptimized" content="320"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1,user-scalable=0"><link rel="stylesheet" type="text/css" href="/styles/screen.css"><link rel="apple-touch-icon" sizes="57x57" href="/images/apple-touch-icon-57x57.png"><link rel="apple-touch-icon" sizes="60x60" href="/images/apple-touch-icon-60x60.png"><link rel="apple-touch-icon" sizes="72x72" href="/images/apple-touch-icon-72x72.png"><link rel="apple-touch-icon" sizes="76x76" href="/images/apple-touch-icon-76x76.png"><link rel="apple-touch-icon" sizes="114x114" href="/images/apple-touch-icon-114x114.png"><link rel="apple-touch-icon" sizes="120x120" href="/images/apple-touch-icon-120x120.png"><link rel="apple-touch-icon" sizes="144x144" href="/images/apple-touch-icon-144x144.png"><link rel="apple-touch-icon" sizes="152x152" href="/images/apple-touch-icon-152x152.png"><link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-180x180.png"><link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png"><link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png"><link rel="icon" type="image/png" sizes="96x96" href="/images/favicon-96x96.png"><link rel="icon" type="image/png" sizes="160x160" href="/images/favicon-160x160.png"><link rel="icon" type="image/png" sizes="192x192" href="/images/favicon-192x192.png"><meta name="msapplication-TileColor" content="#121315"><meta name="msapplication-TileImage" content="/images/mstile-144x144.png"></head><body itemscope itemtype="https://schema.org/WebPage"><header itemscope itemtype="https://schema.org/WPHeader"><a href="/"><img src="/images/svdb.png" alt="Zhi Wang's Machine Learning  blog" title="Zhi Wang's Machine Learning  blog"></a><h1><a href="/" alt="Zhi Wang's Machine Learning  blog" title="Zhi Wang's Machine Learning  blog" itemprop="headline">Zhi Wang's Machine Learning  blog</a></h1><p itemprop="description">ideas worth practise</p><nav itemscope itemtype="https://schema.org/SiteNavigationElement"><ul><li itemprop="name"><a href="/" alt="Home" title="Home" itemprop="url">Home</a></li><li itemprop="name"><a href="/articles" alt="Articles" title="Articles" itemprop="url">Articles</a></li><li itemprop="name"><a href="/about" alt="About" title="About" itemprop="url">About</a></li></ul></nav><div class="space"></div></header><main itemscope itemtype="https://schema.org/Blog"><article class="full"><h1 itemprop="headline"></h1><span class="post-meta">Published on<time itemprop="datePublished" datetime="2016-05-21T06:55:55.000Z"> 星期六, 五月 21日 2016 at 14:55</time><br>Last updated on<time itemprop="dateModified" datetime="2016-05-21T06:55:55.000Z"> 星期六, 五月 21日 2016 at 14:55</time></span><h1 id="Scikit-Flow尝鲜"><a href="#Scikit-Flow尝鲜" class="headerlink" title="Scikit Flow尝鲜"></a>Scikit Flow尝鲜</h1><h2 id="Scikit-Flow简介"><a href="#Scikit-Flow简介" class="headerlink" title="Scikit Flow简介"></a>Scikit Flow简介</h2><p>如果你听说过深度学习，你应该听说过Google开源的深度学习工具<strong>TensorFlow</strong>。<br>如果你尝试过学习或使用<strong>Tensorflow</strong>，你一定会喜欢上<strong>Scikit Flow</strong>，因为他会让你更快的上手使用Tensorflow。<br>如果你有使用<strong>Scikit-learn</strong>的经验，那么对Scikit Flow的操作逻辑你会很熟悉。<br>有兴趣的同学可以详细阅读该博客。<a href="http://terrytangyuan.github.io/2016/03/14/scikit-flow-intro/" target="_blank" rel="external">(http://terrytangyuan.github.io/2016/03/14/scikit-flow-intro/)</a></p>
+<h2 id="牛刀小试"><a href="#牛刀小试" class="headerlink" title="牛刀小试"></a>牛刀小试</h2><p>笔者就拿自己项目中的数据来做个体验，该项目是个<strong>二分类</strong>问题，之前使用<strong>GBM</strong>方法达到的效果<strong>AUC</strong>达到<strong>0.72</strong>。    </p>
+<h3 id="数据情况"><a href="#数据情况" class="headerlink" title="数据情况"></a>数据情况</h3><p>由于数据保密性问题，这里不做数据的展示，明确:</p>
+<ol>
+<li>使用同样的训练集和测试集数据</li>
+<li>训练集样本正负样本不均衡    </li>
+</ol>
+<p>我们直接从处理好的数据开始，这里我准备好了X_train, y_train, X_test, y_test：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">from</span> sklearn <span class="keyword">import</span> metrics</span><br><span class="line"><span class="keyword">from</span> sklearn.cross_validation <span class="keyword">import</span> train_test_split</span><br><span class="line"><span class="comment">### 这里输出***男一号***</span></span><br><span class="line"><span class="keyword">from</span> tensorflow.contrib <span class="keyword">import</span> learn</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)</span><br></pre></td></tr></table></figure>
+<pre><code>(30466, 67) (30466,) (7781, 67) (7781,)
+</code></pre><h3 id="抽样处理"><a href="#抽样处理" class="headerlink" title="抽样处理"></a>抽样处理</h3><p>对不均衡数据样本处理的方法有很多，这里简单使用了<strong>Under-Sampling</strong>的方法，对其他方法感兴趣学习下<strong>unbalanced_dataset</strong>这个library。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> unbalanced_dataset <span class="keyword">import</span> UnderSampler</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line">print(<span class="string">"抽样前："</span>)</span><br><span class="line"><span class="keyword">print</span> (np.count_nonzero(y_train==<span class="number">1</span>), np.count_nonzero(y_train==<span class="number">0</span>))</span><br><span class="line">verbose = <span class="keyword">False</span></span><br><span class="line"></span><br><span class="line">US = UnderSampler(verbose = verbose)</span><br><span class="line">usx, usy = US.fit_transform(X_train, y_train)</span><br><span class="line"></span><br><span class="line"><span class="keyword">print</span> (<span class="string">"抽样后："</span>)</span><br><span class="line"><span class="keyword">print</span> (np.count_nonzero(usy==<span class="number">1</span>), np.count_nonzero(usy==<span class="number">0</span>))</span><br></pre></td></tr></table></figure>
+<pre><code>抽样前：
+4440 26026
+抽样后：
+4440 3782
+</code></pre><h3 id="使用Deep-Neural-Network模型"><a href="#使用Deep-Neural-Network模型" class="headerlink" title="使用Deep Neural Network模型"></a>使用Deep Neural Network模型</h3><ol>
+<li>首先创建一个3层的深度神经网络，</li>
+<li>从训练及样本中抽取10%的样本作为Validation set</li>
+<li>使用Early-stop方法控制训练过程，在skflow.monitors.ValidationMonitor中提供了early_stopping_rounds参数来进行设置</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">classifier = learn.TensorFlowDNNClassifier(hidden_units=[<span class="number">10</span>, <span class="number">20</span>, <span class="number">10</span>],</span><br><span class="line">    n_classes=<span class="number">2</span>, steps=<span class="number">5000</span>)</span><br><span class="line"></span><br><span class="line">X_train, X_val, y_train, y_val = train_test_split(usx, usy,</span><br><span class="line">                                                  test_size=<span class="number">0.1</span>, random_state=<span class="number">42</span>)</span><br><span class="line">val_monitor = learn.monitors.ValidationMonitor(X_val, y_val,</span><br><span class="line">                                                early_stopping_rounds=<span class="number">200</span>,</span><br><span class="line">                                                n_classes=<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="fit函数中设置val-monitor参数实现early-stop控制"><a href="#fit函数中设置val-monitor参数实现early-stop控制" class="headerlink" title="fit函数中设置val_monitor参数实现early-stop控制"></a>fit函数中设置val_monitor参数实现early-stop控制</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">classifier.fit(usx, usy, val_monitor)</span><br></pre></td></tr></table></figure>
+<pre><code>Step #99, avg. train loss: 0.98097, avg. val loss: nan
+Step #199, avg. train loss: 0.53269, avg. val loss: nan
+Step #300, epoch #1, avg. train loss: 0.52669, avg. val loss: nan
+Step #400, epoch #1, avg. train loss: 0.51898, avg. val loss: nan
+Step #500, epoch #1, avg. train loss: 0.53059, avg. val loss: nan
+Step #600, epoch #2, avg. train loss: 0.51597, avg. val loss: nan
+Step #700, epoch #2, avg. train loss: 0.52027, avg. val loss: nan
+Step #800, epoch #2, avg. train loss: 0.50008, avg. val loss: nan
+Step #900, epoch #3, avg. train loss: 0.50545, avg. val loss: nan
+Step #1000, epoch #3, avg. train loss: 0.50853, avg. val loss: nan
+
+
+Stopping. Best step:
+ step 829 with loss 0.468855381012
+
+
+
+
+
+TensorFlowDNNClassifier(batch_size=32, class_weight=None, clip_gradients=5.0,
+            config=None, continue_training=False, dropout=None,
+            hidden_units=[10, 20, 10], learning_rate=0.1, n_classes=2,
+            optimizer=&apos;Adagrad&apos;, steps=5000, verbose=1)
+</code></pre><h3 id="使用模型并检验效果"><a href="#使用模型并检验效果" class="headerlink" title="使用模型并检验效果"></a>使用模型并检验效果</h3><p>使用测试集Test set评估模型效果，得到<strong>AUC</strong>为<strong>0.64</strong>。   </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">print</span> (<span class="string">"AUC:"</span>, metrics.roc_auc_score(y_test, classifier.predict(X_test)))</span><br><span class="line"><span class="keyword">print</span> (<span class="string">"Metrics:"</span>)</span><br><span class="line">print(metrics.classification_report(y_test,classifier.predict(X_test)))</span><br></pre></td></tr></table></figure>
+<pre><code>AUC: 0.638526423392
+Metrics:
+             precision    recall  f1-score   support
+
+          0       0.93      0.73      0.82      6941
+          1       0.20      0.55      0.29       840
+
+avg / total       0.85      0.71      0.76      7781
+</code></pre><h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>本文通过使用<strong>Scikit Flow</strong>，建立一个3层深度神经网络模型，展示了使用深度学习算法的便捷性。<br>当然，模型还存在优化空间，如，对不均衡样本集的处理，及后续可以尝试使用<strong>grid_search</strong>进行参数优化等方向。</p>
+</article></main></body></html>
